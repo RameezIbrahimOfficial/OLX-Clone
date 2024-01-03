@@ -7,30 +7,45 @@ import './Signup.css';
 
 export default function Signup() {
   const history = useHistory();
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [phonenumber, setPhonenumber] = useState('')
-  const [password, setpassword] = useState('')
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phonenumber, setPhonenumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const {firebase} = useContext(FirebaseContext)
+  const { firebase } = useContext(FirebaseContext);
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
+
+    if (!username.trim() || !email.trim() || !phonenumber.trim() || !password.trim()) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    if (isNaN(phonenumber) || phonenumber.length !== 10) {
+      setError('Please enter a valid phone number.');
+      return;
+    }
+
     firebase.auth().createUserWithEmailAndPassword(email, password)
       .then((result) => {
-        result.user.updateProfile({displayName:username})
+        result.user.updateProfile({ displayName: username })
           .then(() => {
             firebase.firestore().collection('users').add({
               id: result.user.uid,
               username: username,
               phonenumber: phonenumber
             })
-              .then(()=> {
-                history.push("/login")
-              })
-          })
+              .then(() => {
+                history.push("/login");
+              });
+          });
       })
-  }
+      .catch((error) => {
+        setError(error.message);
+      });
+  };
 
   return (
     <div>
@@ -43,7 +58,7 @@ export default function Signup() {
             className="input"
             type="text"
             value={username}
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             id="fname"
             name="name"
           />
@@ -54,7 +69,7 @@ export default function Signup() {
             className="input"
             type="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             id="email"
             name="email"
           />
@@ -65,7 +80,7 @@ export default function Signup() {
             className="input"
             type="number"
             value={phonenumber}
-            onChange={e => setPhonenumber(e.target.value)}
+            onChange={(e) => setPhonenumber(e.target.value)}
             id="phonenumber"
             name="phone"
           />
@@ -76,10 +91,12 @@ export default function Signup() {
             className="input"
             type="password"
             value={password}
-            onChange={e => setpassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             id="lname"
             name="password"
           />
+          <br />
+          {error && <p className="error">{error}</p>}
           <br />
           <br />
           <button onClick={handleSubmit}>Signup</button>
